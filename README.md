@@ -3,6 +3,17 @@
 ## 数据集
 人民日报语料
 
+## 环境创建
+```shell
+pip install woc -U
+woc -h
+woc conda -h
+woc conda -c -p 3.8
+...
+环境创建好后进入虚拟环境
+pip install -r requirements.txt
+```
+
 ## 原理 
 ### Bilstm-CRF
 
@@ -88,4 +99,6 @@ Finetune-Bert+BiLstm+Crf|True|True|True
 ## REFERENCES
 - [entity_extractor_by_ner](https://github.com/StanleyLsx/entity_extractor_by_ner)
 - [https://github.com/scofield7419/sequence-labeling-BiLSTM-CRF](https://github.com/scofield7419/sequence-labeling-BiLSTM-CRF)
+
+- [BERT-Tensorflow模型部署(CPU版和GPU版)](https://blog.csdn.net/ljp1919/article/details/101100939)
 

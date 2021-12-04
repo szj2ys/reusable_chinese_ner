@@ -1,0 +1,89 @@
+# This is the BASE env
+# the values from [default] will be always loaded and used as default values
+[development]
+message = 'This is in development'
+
+# train/infer
+mode = "infer"
+
+############### Datasets ################
+# datasets delimiter
+delimiter="b"
+# string: (t: "\t";"table")|(b: "backspace";" ")|(other, e.g., '|||', ...)
+
+############### Model ################
+# Finetune-Bert+Crf: use_bert=True, use_bilstm=False, finetune=True
+# Finetune-Bert+BiLstm+Crf: use_bert=True, use_bilstm=True, finetune=True
+# Bert+BiLstm+Crf: use_bert=True, use_bilstm=True, finetune=False
+# BiLstm+Crf: use_bert=False, use_bilstm=True, finetune=False
+
+use_bert=false
+use_bilstm=true
+finetune=false
+
+################ Labeling Scheme ################
+# string: BIO/BIESO
+label_scheme="BIO"
+
+# int, 1:BIO/BIESO; 2:BIO/BIESO + suffix
+# max to 2
+label_level=2
+
+# string: -|_, for connecting the prefix and suffix: `B_PER', `I_LOC'
+hyphen="-"
+
+# unnecessary if label_level=1
+suffix=["ORG","PER","LOC"]
+
+# string: accuracy|precision|recall|f1
+# f1 is compulsory
+measuring_metrics=["precision","recall","f1","accuracy"]
+
+################ Model Parameter ################
+embedding_dim=300
+
+hidden_dim=200
+
+max_sequence_length=300
+# int, cautions! set as a LARGE number as possible,
+# this will be kept during training and inferring, text having length larger than this will be truncated.
+
+CUDA_VISIBLE_DEVICES=0
+# int, -1:CPU, [0,]:GPU
+# coincides with tf.CUDA_VISIBLE_DEVICES
+
+seed=42
+
+################ Training Settings ################
+epoch=3
+batch_size=32
+
+dropout=0.5
+learning_rate=5e-5
+
+optimizer="Adam"
+# string: SGD/Adagrad/AdaDelta/RMSprop/Adam
+
+checkpoints_max_to_keep=3
+print_per_batch=10
+
+is_early_stop = true
+patient=5
+# unnecessary if is_early_stop=False
+
+
+
+# If other env is set by ENV_FOR_DYNACONF env var
+# or switch using settings.env or settings.using_env
+# then the [prod] values will be overwritten with:
+
+
+# When ENV_FOR_DYNACONF=DEV
+[production]
+message = 'This is in production'
+
+
+
+
+
+

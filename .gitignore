@@ -19,10 +19,6 @@ demo*
 *demo.py
 *test.py
 test*
-datasets/results/*.csv
-datasets/*.csv
-datasets/models/*.h5
-datasets/models/*.model
 
 # Sphinx documentation
 docs/_build/
