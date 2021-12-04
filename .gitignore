@@ -16,8 +16,6 @@ __MACOSX/
 demo*
 *.test
 *.data
-*.png
-*.jpg
 *demo.py
 *test.py
 test*
