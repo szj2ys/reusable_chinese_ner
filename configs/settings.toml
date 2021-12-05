@@ -4,7 +4,7 @@
 message = 'This is in development'
 
 # train/infer
-mode = "infer"
+mode = "train"
 
 ############### Datasets ################
 # datasets delimiter
@@ -64,6 +64,7 @@ learning_rate=5e-5
 optimizer="Adam"
 # string: SGD/Adagrad/AdaDelta/RMSprop/Adam
 
+checkpoint_name = "model"
 checkpoints_max_to_keep=3
 print_per_batch=10
 

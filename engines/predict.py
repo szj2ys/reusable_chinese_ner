@@ -9,26 +9,26 @@ from engines.model import NerModel
 from engines.utils.extract_entity import extract_entity
 from tensorflow_addons.text.crf import crf_decode
 from transformers import TFBertModel
+from configs import settings, dirs
 
 
 class Predictor:
-    def __init__(self, configs, data_manager, logger):
+    def __init__(self, data_manager, logger):
         self.dataManager = data_manager
         vocab_size = data_manager.max_token_number
         num_classes = data_manager.max_label_number
         self.logger = logger
-        self.configs = configs
         logger.info('loading model parameter')
-        if self.configs.use_bert and not self.configs.finetune:
+        if settings.use_bert and not settings.finetune:
             self.bert_model = TFBertModel.from_pretrained('bert-base-chinese')
-        self.ner_model = NerModel(configs, vocab_size, num_classes)
+        self.ner_model = NerModel(vocab_size, num_classes)
         # 实例化Checkpoint，设置恢复对象为新建立的模型
-        if configs.finetune:
+        if settings.finetune:
             checkpoint = tf.train.Checkpoint(ner_model=self.ner_model)
         else:
             checkpoint = tf.train.Checkpoint(ner_model=self.ner_model)
         checkpoint.restore(tf.train.latest_checkpoint(
-            configs.checkpoints_dir))  # 从文件恢复模型参数
+            dirs.CHECKPOINT))  # 从文件恢复模型参数
         logger.info('loading model successfully')
 
     def predict_one(self, sentence):
@@ -37,10 +37,10 @@ class Predictor:
         :param sentence:
         :return:
         """
-        if self.configs.use_bert:
+        if settings.use_bert:
             X, y, att_mask, Sentence = self.dataManager.prepare_single_sentence(
                 sentence)
-            if self.configs.finetune:
+            if settings.finetune:
                 model_inputs = (X, att_mask)
             else:
                 model_inputs = self.bert_model(X, attention_mask=att_mask)[0]
@@ -58,7 +58,7 @@ class Predictor:
             str(self.dataManager.id2label[val])
             for val in label_predicts[0][0:inputs_length[0]]
         ]
-        if self.configs.use_bert:
+        if settings.use_bert:
             # 去掉[CLS]和[SEP]对应的位置
             y_pred = y_pred[1:-1]
         entities, suffixes, indices = extract_entity(sentence, y_pred,
