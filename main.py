@@ -14,10 +14,10 @@ from engines.utils.logger import get_logger
 from engines.predict import Predictor
 
 
-def set_env(configures):
-    random.seed(configures.seed)
-    np.random.seed(configures.seed)
-    os.environ['CUDA_VISIBLE_DEVICES'] = configures.CUDA_VISIBLE_DEVICES
+def set_env(settings):
+    random.seed(settings.seed)
+    np.random.seed(settings.seed)
+    os.environ['CUDA_VISIBLE_DEVICES'] = settings.CUDA_VISIBLE_DEVICES
 
 
 def show_data_summary(logger):
@@ -57,7 +57,7 @@ def show_data_summary(logger):
     sys.stdout.flush()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__1":
     logger = get_logger(dirs.LOGS)
     show_data_summary(logger)
     dataManager = DataManager(logger)
@@ -76,26 +76,25 @@ if __name__ == "__main__":
             results = predictor.predict_one(sentence)
             print(results)
 
-if __name__ == '__main__1':
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Tuning with BiLSTM+CRF')
     parser.add_argument('--config_file',
                         default='system.config',
                         help='Configuration File')
     args = parser.parse_args()
-    configs = Configure(config_file=args.config_file)
 
-    fold_check(configs)
-    logger = get_logger(configs.log_dir)
-    configs.show_data_summary(logger)
-    set_env(configs)
-    mode = configs.mode.lower()
-    dataManager = DataManager(configs, logger)
+    # fold_check(configs)
+    logger = get_logger(dirs.LOGS)
+    show_data_summary(logger)
+    set_env(settings)
+    mode = settings.mode.lower()
+    dataManager = DataManager(settings, logger)
     if mode == 'train':
         logger.info('mode: train')
-        train(configs, dataManager, logger)
+        train(settings, dataManager, logger)
     elif mode == 'interactive_predict':
         logger.info('mode: predict_one')
-        predictor = Predictor(configs, dataManager, logger)
+        predictor = Predictor(settings, dataManager, logger)
         predictor.predict_one('warm start')
         while True:
             logger.info('please input a sentence (enter [exit] to exit.)')

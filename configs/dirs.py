@@ -11,7 +11,7 @@ VOCABS = join(DATASETS, "vocabs")
 
 OUTPUT = join(ROOT, "output")
 
-CHECKPOINT = join(ROOT, "checkpoints")
+CHECKPOINT = join(ROOT, "checkpoints", "bilstm-crf")
 
 # log文件路径
 LOGS = join(ROOT, "logs")

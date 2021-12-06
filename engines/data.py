@@ -9,33 +9,36 @@ import numpy as np
 import tensorflow as tf
 from engines.utils.io_functions import read_csv
 from tqdm import tqdm
-from configs import settings, dirs, files
+from configs import files, dirs
 
 
 class DataManager:
     """
     数据管理器
     """
-    def __init__(self, logger):
+    def __init__(self, configs, logger):
+        self.configs = configs
         self.logger = logger
-        self.hyphen = settings.hyphen
+        self.hyphen = configs.hyphen
 
         self.UNKNOWN = '[UNK]'
         self.PADDING = '[PAD]'
+
+        self.train_file = files.TRAIN_FILE
 
         if files.DEV_FILE is not None:
             self.dev_file = files.DEV_FILE
         else:
             self.dev_file = None
 
-        self.label_scheme = settings.label_scheme
-        self.label_level = settings.label_level
-        self.suffix = settings.suffix
+        self.label_scheme = configs.label_scheme
+        self.label_level = configs.label_level
+        self.suffix = configs.suffix
 
-        self.batch_size = settings.batch_size
+        self.batch_size = configs.batch_size
 
-        self.max_sequence_length = settings.max_sequence_length
-        self.embedding_dim = settings.embedding_dim
+        self.max_sequence_length = configs.max_sequence_length
+        self.embedding_dim = configs.embedding_dim
         self.vocabs_dir = dirs.VOCABS
         self.token2id_file = self.vocabs_dir + '/token2id'
         self.label2id_file = self.vocabs_dir + '/label2id'
@@ -43,7 +46,7 @@ class DataManager:
         self.token2id, self.id2token, self.label2id, self.id2label = self.load_vocab(
         )
 
-        if settings.use_bert:
+        if configs.use_bert:
             from transformers import BertTokenizer
             self.tokenizer = BertTokenizer.from_pretrained('bert-base-chinese')
             self.max_token_number = len(self.tokenizer.get_vocab())
@@ -61,12 +64,12 @@ class DataManager:
         if not os.path.isfile(self.token2id_file):
             self.logger.info(
                 'label vocab files not exist, building label vocab...')
-            return self.build_vocab(files.TRAIN_FILE)
+            return self.build_vocab(self.train_file)
 
         self.logger.info('loading vocab...')
         token2id, id2token = {}, {}
         # 不使用Bert做嵌入
-        if not settings.use_bert:
+        if not self.configs.use_bert:
             with open(self.token2id_file, 'r', encoding='utf-8') as infile:
                 for row in infile:
                     row = row.strip()
@@ -92,9 +95,9 @@ class DataManager:
         """
         df_train = read_csv(train_path,
                             names=['token', 'label'],
-                            delimiter=settings.delimiter)
+                            delimiter=self.configs.delimiter)
         token2id, id2token = {}, {}
-        if not settings.use_bert:
+        if not self.configs.use_bert:
             tokens = list(set(df_train['token'][df_train['token'].notnull()]))
             token2id = dict(zip(tokens, range(1, len(tokens) + 1)))
             id2token = dict(zip(range(1, len(tokens) + 1), tokens))
@@ -229,10 +232,10 @@ class DataManager:
         :param train_val_ratio:
         :return:
         """
-        df_train = read_csv(files.TRAIN_FILE,
+        df_train = read_csv(self.train_file,
                             names=['token', 'label'],
-                            delimiter=settings.delimiter)
-        if settings.use_bert:
+                            delimiter=self.configs.delimiter)
+        if self.configs.use_bert:
             X, y, att_mask = self.prepare_bert_embedding(df_train)
             # shuffle the samples
             num_samples = len(X)
@@ -303,8 +306,8 @@ class DataManager:
         """
         df_val = read_csv(self.dev_file,
                           names=['token', 'label'],
-                          delimiter=settings.delimiter)
-        if settings.use_bert:
+                          delimiter=self.configs.delimiter)
+        if self.configs.use_bert:
             X_val, y_val, att_mask_val = self.prepare_bert_embedding(df_val)
             return X_val, y_val, att_mask_val
         else:
@@ -330,7 +333,7 @@ class DataManager:
         :return:
         """
         sentence = list(sentence)
-        if settings.use_bert:
+        if self.configs.use_bert:
             if len(sentence) <= self.max_sequence_length - 2:
                 x = self.tokenizer.encode(sentence)
                 att_mask = [1] * len(x)

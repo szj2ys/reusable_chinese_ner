@@ -9,49 +9,51 @@ import numpy as np
 import math
 import time
 from tqdm import tqdm
+
+from configs import dirs
 from engines.model import NerModel
 from engines.utils.metrics import metrics
 from tensorflow_addons.text.crf import crf_decode
 from transformers import TFBertModel, BertTokenizer
-from configs import settings, dirs
 
 
-def train(data_manager, logger):
+def train(configs, data_manager, logger):
     vocab_size = data_manager.max_token_number
     num_classes = data_manager.max_label_number
-    learning_rate = settings.learning_rate
-    max_to_keep = settings.checkpoints_max_to_keep
+    learning_rate = configs.learning_rate
+    max_to_keep = configs.checkpoints_max_to_keep
     checkpoints_dir = dirs.CHECKPOINT
-    checkpoint_name = settings.checkpoint_name
+    checkpoint_name = configs.checkpoint_name
     best_f1_val = 0.0
     best_at_epoch = 0
     unprocessed = 0
     very_start_time = time.time()
-    epoch = settings.epoch
-    batch_size = settings.batch_size
+    epoch = configs.epoch
+    batch_size = configs.batch_size
 
     # 优化器大致效果Adagrad>Adam>RMSprop>SGD
-    if settings.optimizer == 'Adagrad':
+    if configs.optimizer == 'Adagrad':
         optimizer = tf.keras.optimizers.Adagrad(learning_rate=learning_rate)
-    elif settings.optimizer == 'Adadelta':
+    elif configs.optimizer == 'Adadelta':
         optimizer = tf.keras.optimizers.Adadelta(learning_rate=learning_rate)
-    elif settings.optimizer == 'RMSprop':
+    elif configs.optimizer == 'RMSprop':
         optimizer = tf.keras.optimizers.RMSprop(learning_rate=learning_rate)
-    elif settings.optimizer == 'SGD':
+    elif configs.optimizer == 'SGD':
         optimizer = tf.keras.optimizers.SGD(learning_rate=learning_rate)
     else:
         optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
 
     tokenizer = BertTokenizer.from_pretrained('bert-base-chinese')
-    if settings.use_bert and not settings.finetune:
+    if configs.use_bert and not configs.finetune:
         bert_model = TFBertModel.from_pretrained('bert-base-chinese')
     else:
         bert_model = None
 
     train_dataset, val_dataset = data_manager.get_training_set()
-    ner_model = NerModel(vocab_size, num_classes)
+    ner_model = NerModel(configs, vocab_size, num_classes)
 
     checkpoint = tf.train.Checkpoint(ner_model=ner_model)
+    print(f"checkpoint_name:{checkpoint_name}")
     checkpoint_manager = tf.train.CheckpointManager(
         checkpoint,
         directory=checkpoints_dir,
@@ -71,9 +73,9 @@ def train(data_manager, logger):
         for step, batch in tqdm(
                 train_dataset.shuffle(
                     len(train_dataset)).batch(batch_size).enumerate()):
-            if settings.use_bert:
+            if configs.use_bert:
                 X_train_batch, y_train_batch, att_mask_batch = batch
-                if settings.finetune:
+                if configs.finetune:
                     # 如果微调
                     model_inputs = (X_train_batch, att_mask_batch)
                 else:
@@ -99,12 +101,12 @@ def train(data_manager, logger):
             gradients = tape.gradient(loss, variables)
             # 反向传播，自动微分计算
             optimizer.apply_gradients(zip(gradients, variables))
-            if step % settings.print_per_batch == 0 and step != 0:
+            if step % configs.print_per_batch == 0 and step != 0:
                 batch_pred_sequence, _ = crf_decode(logits, transition_params,
                                                     inputs_length)
                 measures, _ = metrics(X_train_batch, y_train_batch,
-                                      batch_pred_sequence, data_manager,
-                                      tokenizer)
+                                      batch_pred_sequence, configs,
+                                      data_manager, tokenizer)
                 res_str = ''
                 for k, v in measures.items():
                     res_str += (k + ': %.3f ' % v)
@@ -118,16 +120,16 @@ def train(data_manager, logger):
         val_labels_results = {}
         for label in data_manager.suffix:
             val_labels_results.setdefault(label, {})
-        for measure in settings.measuring_metrics:
+        for measure in configs.measuring_metrics:
             val_results[measure] = 0
         for label, content in val_labels_results.items():
-            for measure in settings.measuring_metrics:
+            for measure in configs.measuring_metrics:
                 val_labels_results[label][measure] = 0
 
         for val_batch in tqdm(val_dataset.batch(batch_size)):
-            if settings.use_bert:
+            if configs.use_bert:
                 X_val_batch, y_val_batch, att_mask_batch = val_batch
-                if settings.finetune:
+                if configs.finetune:
                     model_inputs = (X_val_batch, att_mask_batch)
                 else:
                     model_inputs = bert_model(X_val_batch,
@@ -145,7 +147,7 @@ def train(data_manager, logger):
                                                     transition_params_val,
                                                     inputs_length_val)
             measures, lab_measures = metrics(X_val_batch, y_val_batch,
-                                             batch_pred_sequence_val,
+                                             batch_pred_sequence_val, configs,
                                              data_manager, tokenizer)
 
             for k, v in measures.items():
@@ -181,11 +183,11 @@ def train(data_manager, logger):
         else:
             unprocessed += 1
 
-        if settings.is_early_stop:
-            if unprocessed >= settings.patient:
+        if configs.is_early_stop:
+            if unprocessed >= configs.patient:
                 logger.info(
                     'early stopped, no progress obtained within {} epochs'.
-                    format(settings.patient))
+                    format(configs.patient))
                 logger.info('overall best f1 is {} at {} epoch'.format(
                     best_f1_val, best_at_epoch))
                 logger.info('total training time consumption: %.3f(min)' %
