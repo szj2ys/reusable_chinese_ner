@@ -53,7 +53,7 @@ def train(configs, data_manager, logger):
     ner_model = NerModel(configs, vocab_size, num_classes)
 
     checkpoint = tf.train.Checkpoint(ner_model=ner_model)
-    print(f"checkpoint_name:{checkpoint_name}")
+
     checkpoint_manager = tf.train.CheckpointManager(
         checkpoint,
         directory=checkpoints_dir,
@@ -66,7 +66,7 @@ def train(configs, data_manager, logger):
         print('Initializing from scratch.')
 
     num_val_iterations = int(math.ceil(1.0 * len(val_dataset) / batch_size))
-    logger.info(('+' * 20) + 'training starting' + ('+' * 20))
+    logger.info(('+' * 20) + 'start training' + ('+' * 20))
     for i in range(epoch):
         start_time = time.time()
         logger.info('epoch:{}/{}'.format(i + 1, epoch))
