@@ -1,5 +1,10 @@
 # 实体识别
 
+```shell
+# remove out of date log file
+find logs -mtime +2 -name "*.log" -exec rm -rf {} \;
+```
+
 test
 海钓比赛在地点在厦门和金门之间
 

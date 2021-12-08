@@ -1,28 +1,77 @@
 # -*- coding: utf-8 -*-
-# @Time : 2020/9/9 6:14 下午
-# @Author : lishouxian
-# @Email : gzlishouxian@gmail.com
-# @File : logger.py
-# @Software: PyCharm
-import datetime
+import logging.handlers
+import os
 import logging
+from datetime import datetime
 
 
-def get_logger(log_dir):
-    log_file = log_dir + '/' + (
-        datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S.log'))
-    logger = logging.getLogger(__name__)
-    logger.setLevel(level=logging.INFO)
-    formatter = logging.Formatter('%(message)s')
-    # log into file
-    handler = logging.FileHandler(log_file)
-    handler.setLevel(logging.INFO)
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    # log into terminal
+class ColorFormatter(logging.Formatter):
+    """Colorizes log output."""
+
+    LEVEL_COLORS = {
+        logging.DEBUG: "\033[00;32m",  # GREEN
+        logging.INFO: "\033[00;30m",  # BOLD BLACK
+        logging.WARN: "\033[00;35m",  # MAGENTA
+        logging.WARNING: "\033[00;35m",  # MAGENTA
+        logging.ERROR: "\033[00;31m",  # RED
+        logging.CRITICAL: "\033[01;31m",  # BOLD RED
+    }
+
+    COLOR_STOP = "\033[0m"
+
+    def add_color(self, record):
+        """Add color to a record."""
+        if getattr(record, "_stream_is_a_tty", False):
+            record.color = self.LEVEL_COLORS[record.levelno]
+            record.color_stop = self.COLOR_STOP
+        else:
+            record.color = self.LEVEL_COLORS[record.levelno]
+            record.color_stop = self.COLOR_STOP
+
+    def remove_color(self, record):
+        """Remove color from a record."""
+        del record.color
+        del record.color_stop
+
+    def format(self, record):
+        """Format a record."""
+        self.add_color(record)
+        s = super(ColorFormatter, self).format(record)
+        self.remove_color(record)
+        return s
+
+
+def get_logger(log_path='logs', log_level='INFO', name=None):
+
+    if not os.path.exists(log_path):
+        os.makedirs(log_path)
+
+    logger = logging.getLogger(name)
+    logger.setLevel(log_level)
+
+    _file_format = '%(asctime)s|%(levelname)s|%(filename)s[:%(' \
+               'lineno)d] %(color)s%(message)s %(color_stop)s'
+    _console_format = '[%(asctime)s|%(levelname)s] %(color)s%(message)s %(' \
+                      'color_stop)s'
+
+    file_formatter = ColorFormatter(fmt=_file_format,
+                                    datefmt="%Y-%m-%d "
+                                    "%H:%M:%S")
+    console_formatter = ColorFormatter(fmt=_console_format,
+                                       datefmt="%Y-%m-%d "
+                                       "%H:%M:%S")
+
+    file_handler = logging.handlers.WatchedFileHandler(
+        f"{log_path}"
+        f"/{datetime.now().strftime('%Y-%m-%d-%H-%M-%S.log')}")
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(file_formatter)
+
+    logger.addHandler(file_handler)
+
     console = logging.StreamHandler()
-    console.setFormatter(formatter)
-    console.setLevel(logging.INFO)
+    console.setLevel(log_level)
+    console.setFormatter(console_formatter)
     logger.addHandler(console)
-    logger.info(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+
     return logger

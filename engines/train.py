@@ -174,7 +174,7 @@ def train(configs, data_manager, logger):
         logger.info('time consumption:%.2f(min), %s' %
                     (time_span, val_res_str))
 
-        if np.array(val_f1_avg).mean() > best_f1_val:
+        if np.array(val_f1_avg).mean() >= best_f1_val:
             unprocessed = 0
             best_f1_val = np.array(val_f1_avg).mean()
             best_at_epoch = i + 1
