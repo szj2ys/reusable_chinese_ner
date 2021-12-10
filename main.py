@@ -10,7 +10,7 @@ import os
 from engines.train import train
 from engines.data import DataManager
 from engines.configure import Configure
-from engines.utils.logger import get_logger
+from engines.utils.logger import logger
 from engines.predict import Predictor
 
 
@@ -58,7 +58,6 @@ def show_data_summary(logger):
 
 
 if __name__ == "__main__1":
-    logger = get_logger(dirs.LOGS)
     show_data_summary(logger)
     dataManager = DataManager(logger)
     if settings.MODE == 'train':
@@ -84,7 +83,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # fold_check(configs)
-    logger = get_logger(dirs.LOGS)
     show_data_summary(logger)
     set_env(settings)
     mode = settings.mode.lower()

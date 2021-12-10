@@ -55,7 +55,7 @@ CUDA_VISIBLE_DEVICES="0"
 seed=42
 
 ################ Training Settings ################
-epoch=3
+epoch=10
 batch_size=32
 
 dropout=0.5

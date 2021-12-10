@@ -4,13 +4,15 @@ import os
 import logging
 from datetime import datetime
 
+from configs import dirs
+
 
 class ColorFormatter(logging.Formatter):
     """Colorizes log output."""
 
     LEVEL_COLORS = {
         logging.DEBUG: "\033[00;32m",  # GREEN
-        logging.INFO: "\033[00;30m",  # BOLD BLACK
+        logging.INFO: "\033[00;34m",  # BLUE
         logging.WARN: "\033[00;35m",  # MAGENTA
         logging.WARNING: "\033[00;35m",  # MAGENTA
         logging.ERROR: "\033[00;31m",  # RED
@@ -49,9 +51,9 @@ def get_logger(log_path='logs', log_level='INFO', name=None):
     logger = logging.getLogger(name)
     logger.setLevel(log_level)
 
-    _file_format = '%(asctime)s|%(levelname)s|%(filename)s[:%(' \
-               'lineno)d] %(color)s%(message)s %(color_stop)s'
-    _console_format = '[%(asctime)s|%(levelname)s] %(color)s%(message)s %(' \
+    _file_format = '%(color)s%(asctime)s|%(levelname)s|%(filename)s[:%(' \
+               'lineno)d] %(message)s %(color_stop)s'
+    _console_format = '%(color)s[%(asctime)s|%(levelname)s] %(message)s %(' \
                       'color_stop)s'
 
     file_formatter = ColorFormatter(fmt=_file_format,
@@ -67,7 +69,13 @@ def get_logger(log_path='logs', log_level='INFO', name=None):
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(file_formatter)
 
+    efile_handler = logging.handlers.WatchedFileHandler(
+        f'{log_path}/error.log')
+    efile_handler.setLevel(logging.ERROR)
+    efile_handler.setFormatter(file_formatter)
+
     logger.addHandler(file_handler)
+    logger.addHandler(efile_handler)
 
     console = logging.StreamHandler()
     console.setLevel(log_level)
@@ -75,3 +83,18 @@ def get_logger(log_path='logs', log_level='INFO', name=None):
     logger.addHandler(console)
 
     return logger
+
+
+try:
+    os.system(
+        f"find {dirs.LOGS} -mtime +2 -name '*.log' -exec rm -rf {'{}'} \;")
+except:
+    pass
+
+logger = get_logger(log_path=dirs.LOGS)
+
+if __name__ == '__main__':
+    logger.debug('jlkjkjklj')
+    logger.info('jlkjkjklj')
+    logger.error('jlkjkjklj')
+    print('测试打印')
